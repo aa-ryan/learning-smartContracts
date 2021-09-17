@@ -39,6 +39,8 @@ def _algod_client():
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     return algod.AlgodClient(algod_token, algod_address)
 
+## Helper functions
+
 def process_transactions(transaction):
     """Helper function that is reponsible for deploying our smart contract to the Algorand Blockchain"""
     """Send provided grouped `transactions` to network and wait for confirmation"""
@@ -46,3 +48,38 @@ def process_transactions(transaction):
     transaction_id = client.send_transaction(transaction)
     _wait_for_confirmation(client, transaction_id, 4)
     return transaction_id
+
+def _wait_for_confirmation(client, transaction_id, timeout):
+    """
+    Wait until the transaction is confirmed or rejected, or until `timeout` numbers
+    of rounds have passed.
+    Args:
+            transaction_id (str): The transaction to wait for 
+            timeout (int): maximum number of rounds to wait
+    Returns:
+            dict: pending transaction information, or throws an error if the transaction
+            is not confirmed or rejected in the next timeout rounds
+    """
+    start_round = client.status()['last-round'] + 1
+    current_round = start_round
+
+    while current_round < start_round + timeout:
+        try:
+            pending_txn = client.pending_transaction_info(transaction_id)
+        except Exception:
+            return
+        if pending_txn.get("confirmed-round", 0) > 0:
+            return pending_txn
+        elif pending_txn["pool-error"]:
+            raise Exception("pool error: {}".format(pending_txn["pool-error"]))
+
+        client.status_after_block(current_round)
+        current_round += 1
+        raise Exception (
+            "pending tx not found in teimout rounds, timeout value = : {}".format(timeout)
+        )
+
+
+def suggested_params():
+    """Returns the suggested params from the algod client"""
+    return _algod_client.suggested_params()
