@@ -1,4 +1,4 @@
-from pyteal import Int, Bytes, Addr, Txn, And, Global
+from pyteal import Int, Bytes, Addr, Txn, And, Or, Global
 
 # template variable
 
@@ -23,3 +23,11 @@ periodic_pay_transfer = And(Txn.close_remainder_to() == Global.zero_address(),
                                 Txn.first_valid() % tmpl_period == Int(0),
                                 Txn.last_valid() == tmpl_dur + Txn.first_valid(),
                                 Txn.lease() == tmpl_x)
+
+periodic_pay_close = And(Txn.close_remainder_to() == tmpl_rcv,
+                         Txn.receiver() == Global.zero_address(),
+                         Txn.first_valid() > tmpl_timeout,
+                         Txn.amount() == Int(0))
+
+periodic_pay_escrow = And(periodic_pay_core, Or(periodic_pay_transfer, periodic_pay_close))
+print(periodic_pay_escrow.teal())
