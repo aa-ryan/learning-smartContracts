@@ -17,10 +17,12 @@ tmpl_timeout = Int(30000)
 periodic_pay_core = And(Txn.type_enum() == Int(1),
                             Txn.fee() < tmpl_fee)
 
+# Checks that the transaction will not be closing out the balance of the address
+# setting receiver to be intended receiver and amount of transaction to intended amount
 periodic_pay_transfer = And(Txn.close_remainder_to() == Global.zero_address(),
                                 Txn.receiver() == tmpl_rcv,
                                 Txn.amount() == tmpl_amt,
-                                Txn.first_valid() % tmpl_period == Int(0),
+                                Txn.first_valid() % tmpl_period == Int(0),  # allows the transfer the happen every tmpl_period rounds for tmpl_dur
                                 Txn.last_valid() == tmpl_dur + Txn.first_valid(),
                                 Txn.lease() == tmpl_x)
 
