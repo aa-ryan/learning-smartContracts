@@ -26,10 +26,13 @@ periodic_pay_transfer = And(Txn.close_remainder_to() == Global.zero_address(),
                                 Txn.last_valid() == tmpl_dur + Txn.first_valid(),
                                 Txn.lease() == tmpl_x)
 
+# Txn.first_valid() > tmpl_timeout then remaining balance is closed to tmpl_rcv
 periodic_pay_close = And(Txn.close_remainder_to() == tmpl_rcv,
                          Txn.receiver() == Global.zero_address(),
                          Txn.first_valid() > tmpl_timeout,
                          Txn.amount() == Int(0))
 
+# combining all conditions
 periodic_pay_escrow = And(periodic_pay_core, Or(periodic_pay_transfer, periodic_pay_close))
+
 print(compileTeal(periodic_pay_escrow, mode=Mode.Signature, version=2))
