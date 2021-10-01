@@ -1,4 +1,4 @@
-from pyteal import Addr, Bytes, Txn
+from pyteal import Addr, Bytes, Txn, And, TxnType, Arg
 from pyteal.ast.global_ import Global
 from pyteal.ast.unaryexpr import Sha256
 
@@ -24,4 +24,4 @@ def htcl(
         Txn.rekey_to() == Global.zero_address(),
     )
 
-    recv_cond = And(Txn.receiver() == tmpl_seller, tmpl_hash,_fn(Arg(0)) == tmpl_secret)
+    recv_cond = And(Txn.receiver() == tmpl_seller, tmpl_hash_fn(Arg(0)) == tmpl_secret)
