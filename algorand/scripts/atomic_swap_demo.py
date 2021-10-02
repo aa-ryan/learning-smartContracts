@@ -1,6 +1,4 @@
-from pyteal import Addr, Bytes, Txn, And, TxnType, Arg
-from pyteal.ast.global_ import Global
-from pyteal.ast.unaryexpr import Sha256
+from pyteal import Addr, Bytes, Txn, And, Or, TxnType, Arg, Int, compileTeal, Mode, Global, Sha256
 
 """Atomic Swap"""
 
@@ -9,7 +7,7 @@ bob = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
 secret = Bytes("base32", "2323232323232323")
 timeout = 3000
 
-def htcl(
+def htlc(
     tmpl_seller = alice,
     tmpl_buyer = bob,
     tmpl_fee = 1000,
@@ -25,3 +23,11 @@ def htcl(
     )
 
     recv_cond = And(Txn.receiver() == tmpl_seller, tmpl_hash_fn(Arg(0)) == tmpl_secret)
+
+    esc_cond = And(Txn.receiver() == tmpl_buyer, Txn.first_valid() > Int(tmpl_timeout))
+
+    return And(fee_cond, safety_cond, Or(recv_cond, esc_cond))
+
+
+if __name__ == "__main__":
+    print(compileTeal(htlc(), mode=Mode.Signature, version=2))
